@@ -12,6 +12,8 @@
 
 const puppeteer = require('puppeteer');
 const lighthouse = require('lighthouse');
+const fs = require('fs');
+const ReportGenerator = require('lighthouse/lighthouse-core/report/report-generator');
 
 // This port will be used by Lighthouse later. The specific port is arbitrary.
 const PORT = 8041;
@@ -52,12 +54,21 @@ async function main() {
   // The local server is running on port 8000.
   const url = 'http://localhost:8000/dashboard';
   // Direct Lighthouse to use the same port.
-  const result = await lighthouse(url, {port: PORT});
+  // Option disableStorageReset = true is needed for anything else than cookie based auth
+  const result = await lighthouse(url, {port: PORT, disableStorageReset: true});
   // Direct Puppeteer to close the browser as we're done with it.
   await browser.close();
 
   // Output the result.
   console.log(JSON.stringify(result.lhr, null, 2));
+  
+  //Output result to HTML file
+  fs.writeFile("result.html", ReportGenerator.generateReport(result.lhr, 'html'), function(err) {
+    if(err) {
+        return console.log(err);
+    }
+    console.log("The HTML file was saved!");
+  });
 }
 
 main();
